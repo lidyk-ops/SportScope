@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Football Video Analyzer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+  <div class="page-container">
+
+    <!-- 左边：API Key + 上传视频 + 预览 + 进度条 + 历史 -->
+    <div class="left-panel">
+      <h1>Football Video Analyzer</h1>
+      <p class="subtitle">
+        Enter your Gemini API key, upload a football clip, preview it, and let AI analyze both offense and defense.
+      </p>
+
+      <form id="upload-form" enctype="multipart/form-data">
+        <!-- API Key 输入 -->
+        <div class="field">
+          <label for="api_key">Gemini API Key（只在本机使用）</label>
+          <input
+            type="password"
+            id="api_key"
+            name="api_key"
+            placeholder="Paste your API key here"
+            required
+          />
+        </div>
+
+        <!-- 视频上传 -->
+        <div class="field">
+          <label for="video">Upload video clip (mp4):</label>
+          <input
+            type="file"
+            id="video"
+            name="video"
+            accept="video/*"
+            required
+          />
+        </div>
+
+        <!-- 视频预览 -->
+        <div class="field">
+          <label>Preview:</label>
+          <video id="preview" class="video-preview hidden" controls></video>
+        </div>
+
+        <button type="submit" class="analyze-btn">Analyze the video</button>
+      </form>
+
+      <!-- 进度条 + 状态文字 -->
+      <div class="progress-row">
+        <div id="progress-container" class="progress-container hidden">
+          <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <div id="status" class="status-text"></div>
+      </div>
+
+      <!-- 历史记录（移动到左边） -->
+      <div class="history-panel">
+        <div class="history-header">
+          <span>History</span>
+          <button id="clear-history" class="small-btn">Clear</button>
+        </div>
+        <ul id="history-list"></ul>
+      </div>
+    </div>
+
+    <!-- 右边：进攻/防守切换 + 结果 -->
+    <div class="right-panel">
+      <h2>Analysis</h2>
+
+      <div class="toggle-buttons">
+        <button id="offense-btn" class="toggle-btn active">Offense 进攻</button>
+        <button id="defense-btn" class="toggle-btn">Defense 防守</button>
+      </div>
+
+      <div id="result" class="result-box hidden">
+        <p><strong>Side:</strong> <span id="current_side"></span></p>
+        <p><strong>Summary:</strong> <span id="summary"></span></p>
+        <p><strong>Play Type:</strong> <span id="play_type"></span></p>
+        <p><strong>Details:</strong> <span id="details"></span></p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const form = document.getElementById("upload-form");
+    const statusDiv = document.getElementById("status");
+    const progressContainer = document.getElementById("progress-container");
+    const progressBar = document.getElementById("progress-bar");
+    const resultDiv = document.getElementById("result");
+    const summarySpan = document.getElementById("summary");
+    const playTypeSpan = document.getElementById("play_type");
+    const detailsSpan = document.getElementById("details");
+    const currentSideSpan = document.getElementById("current_side");
+    const apiKeyInput = document.getElementById("api_key");
+    const videoInput = document.getElementById("video");
+    const previewVideo = document.getElementById("preview");
+    const offenseBtn = document.getElementById("offense-btn");
+    const defenseBtn = document.getElementById("defense-btn");
+    const historyList = document.getElementById("history-list");
+    const clearHistoryBtn = document.getElementById("clear-history");
+
+    // 保存当前分析结果 & 历史记录
+    let analysisData = null;
+    let historyItems = []; // { id, label, data }
+    let progressTimer = null;
+
+    // ========= 视频预览 =========
+    videoInput.addEventListener("change", () => {
+      const file = videoInput.files[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        previewVideo.src = url;
+        previewVideo.classList.remove("hidden");
+      } else {
+        previewVideo.src = "";
+        previewVideo.classList.add("hidden");
+      }
+    });
+
+    // ========= 展示某一方（进攻/防守） =========
+    function showSide(side) {
+      if (!analysisData || !analysisData[side]) return;
+      const sideData = analysisData[side];
+
+      currentSideSpan.textContent =
+        side === "offense" ? "Offense (进攻)" : "Defense (防守)";
+      summarySpan.textContent = sideData.summary || "N/A";
+      playTypeSpan.textContent = sideData.play_type || "N/A";
+      detailsSpan.textContent = sideData.details || "N/A";
+
+      resultDiv.classList.remove("hidden");
+
+      if (side === "offense") {
+        offenseBtn.classList.add("active");
+        defenseBtn.classList.remove("active");
+      } else {
+        defenseBtn.classList.add("active");
+        offenseBtn.classList.remove("active");
+      }
+    }
+
+    offenseBtn.addEventListener("click", () => {
+      showSide("offense");
+    });
+
+    defenseBtn.addEventListener("click", () => {
+      showSide("defense");
+    });
+
+    // ========= 历史记录 =========
+    function addToHistory(data, videoFile) {
+      const id = Date.now();
+      const labelBase =
+        data.offense?.summary ||
+        data.defense?.summary ||
+        `Play ${historyItems.length + 1}`;
+      const fileName = videoFile?.name || "Unnamed clip";
+      const label = `${fileName} — ${labelBase}`;
+
+      historyItems.push({ id, label, data });
+      renderHistory();
+    }
+
+    function renderHistory() {
+      historyList.innerHTML = "";
+      historyItems.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.className = "history-item";
+
+        const btn = document.createElement("button");
+        btn.className = "history-item-btn";
+        btn.textContent = `${index + 1}. ${item.label.slice(0, 80)}`;
+        btn.onclick = () => {
+          analysisData = item.data;
+          showSide("offense");
+        };
+
+        li.appendChild(btn);
+        historyList.appendChild(li);
+      });
+    }
+
+    clearHistoryBtn.addEventListener("click", () => {
+      historyItems = [];
+      historyList.innerHTML = "";
+      resultDiv.classList.add("hidden");
+      statusDiv.textContent = "";
+    });
+
+    // ========= 进度条逻辑 =========
+    function startProgress() {
+      let progress = 0;
+      progressBar.style.width = "0%";
+      progressContainer.classList.remove("hidden");
+
+      // 每 500ms 增加一点，最多到 95%，真实完成时再拉到 100%
+      progressTimer = setInterval(() => {
+        progress = Math.min(progress + 5, 95);
+        progressBar.style.width = progress + "%";
+      }, 500);
+    }
+
+    function finishProgress(success = true) {
+      if (progressTimer) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+      }
+      if (success) {
+        progressBar.style.width = "100%";
+        // 1 秒后自动隐藏进度条
+        setTimeout(() => {
+          progressContainer.classList.add("hidden");
+        }, 1000);
+      } else {
+        // 失败就直接隐藏
+        progressContainer.classList.add("hidden");
+        progressBar.style.width = "0%";
+      }
+    }
+
+    // ========= 提交表单：上传视频 + 分析 =========
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!apiKeyInput.value) {
+        alert("Please enter your Gemini API key.");
+        return;
+      }
+      const file = videoInput.files[0];
+      if (!file) {
+        alert("Please choose a video file.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("api_key", apiKeyInput.value);
+      formData.append("video", file);
+
+      // 开始进度条
+      startProgress();
+      statusDiv.textContent = "Analyzing video... this may take some time.";
+      resultDiv.classList.add("hidden");
+      analysisData = null;
+
+      try {
+        const res = await fetch("/analyze", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          finishProgress(false);
+          statusDiv.textContent = "Error: " + (data.error || "Unknown error");
+          return;
+        }
+
+        // 成功
+        finishProgress(true);
+        statusDiv.textContent = "Analysis completed ✅";
+
+        analysisData = data;
+        addToHistory(data, file);
+
+        // 默认展示进攻
+        showSide("offense");
+      } catch (err) {
+        console.error(err);
+        finishProgress(false);
+        statusDiv.textContent = "Request failed. Please try again.";
+      }
+    });
+  </script>
+
+</body>
+</html>
