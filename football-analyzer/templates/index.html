@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Football Video Analyzer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+  <div class="page-container">
+
+    <!-- 左边：API Key + 上传视频 -->
+    <div class="left-panel">
+      <h1>Football Video Analyzer</h1>
+      <p class="subtitle">
+        Enter your Gemini API key, upload a football clip, and let AI analyze the play.
+      </p>
+
+      <form id="upload-form" enctype="multipart/form-data">
+        <!-- API Key 输入 -->
+        <div class="field">
+          <label for="api_key">Gemini API Key（只在本机使用）</label>
+          <input
+            type="password"
+            id="api_key"
+            name="api_key"
+            placeholder="Paste your API key here"
+            required
+          />
+        </div>
+
+        <!-- 视频上传 -->
+        <div class="field">
+          <label for="video">Upload video clip (mp4):</label>
+          <input
+            type="file"
+            id="video"
+            name="video"
+            accept="video/*"
+            required
+          />
+        </div>
+
+        <button type="submit" class="analyze-btn">Analyze the video</button>
+      </form>
+
+      <div id="status" class="status-text"></div>
+    </div>
+
+    <!-- 右边：分析结果 -->
+    <div class="right-panel">
+      <h2>Analysis Result</h2>
+
+      <div id="result" class="result-box hidden">
+        <p><strong>Summary:</strong> <span id="summary"></span></p>
+        <p><strong>Play Type:</strong> <span id="play_type"></span></p>
+        <p><strong>Route Example:</strong> <span id="route_example"></span></p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const form = document.getElementById("upload-form");
+    const statusDiv = document.getElementById("status");
+    const resultDiv = document.getElementById("result");
+    const summarySpan = document.getElementById("summary");
+    const playTypeSpan = document.getElementById("play_type");
+    const routeSpan = document.getElementById("route_example");
+    const apiKeyInput = document.getElementById("api_key");
+
+    // 如果你想让浏览器记住 key，可以打开这两行：
+    // apiKeyInput.value = localStorage.getItem("gemini_api_key") || "";
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fileInput = document.getElementById("video");
+
+      if (!apiKeyInput.value) {
+        alert("Please enter your Gemini API key.");
+        return;
+      }
+      if (!fileInput.files[0]) {
+        alert("Please choose a video file.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("api_key", apiKeyInput.value);
+      formData.append("video", fileInput.files[0]);
+
+      // 想记住 key 可以解开这一行：
+      // localStorage.setItem("gemini_api_key", apiKeyInput.value);
+
+      statusDiv.textContent = "Analyzing video... this may take some time.";
+      resultDiv.classList.add("hidden");
+
+      try {
+        const res = await fetch("/analyze", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          statusDiv.textContent = "Error: " + (data.error || "Unknown error");
+          return;
+        }
+
+        statusDiv.textContent = "Analysis completed ✅";
+
+        summarySpan.textContent = data.summary || "N/A";
+        playTypeSpan.textContent = data.play_type || "N/A";
+        routeSpan.textContent = data.route_example || "N/A";
+
+        resultDiv.classList.remove("hidden");
+      } catch (err) {
+        console.error(err);
+        statusDiv.textContent = "Request failed. Please try again.";
+      }
+    });
+  </script>
+
+</body>
+</html>
