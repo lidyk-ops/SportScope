@@ -4,9 +4,13 @@ A simple web app that lets you upload an American football video and get AI anal
 
 # ⭐ Features
 •	Upload and preview football video clips
+
 •	AI analyzes offense and defense separately
+
 •	Simple progress bar
+
 •	History of previous analyses (local only)
+
 •	Clean, easy-to-use interface
 
 
