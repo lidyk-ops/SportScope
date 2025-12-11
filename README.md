@@ -5,13 +5,15 @@ A simple web app that lets you upload an American football video and get AI anal
 # ⭐ Features
 •	Upload and preview football video clips
 
+•	Coach Mode:the web offers three different coach personalities 
+
 •	AI analyzes offense and defense separately
 
-•	Simple progress bar
+•	Simple progress bar and playback speed
 
 •	History of previous analyses (local only)
 
-•	Clean, easy-to-use interface
+•	Export the analysis into a excel file 
 
 
 # 🔐 Get a Gemini API Key
@@ -33,10 +35,11 @@ A simple web app that lets you upload an American football video and get AI anal
 # 🧠 How to Use
 1.	Paste your Gemini API Key
 2.	Upload a football video (MP4)
-3.	Click Analyze
-4.	View Offense/Defense results
-5.	Switch between results or select from History
-6.	click the export button and you could export all the info into an excel file
+3.	Select the coach mode
+4.	Click Analyze
+5.	View Offense/Defense results
+6.	Switch between results or select from History
+7.	click the export button and you could export all the info into an excel file
 
 # Contribution 
 Football analyzer files (app.py,style.css & index.html) -Zhiyuan Li
