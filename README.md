@@ -36,4 +36,10 @@ A simple web app that lets you upload an American football video and get AI anal
 3.	Click Analyze
 4.	View Offense/Defense results
 5.	Switch between results or select from History
+6.	click the export button and you could export all the info into an excel file
 
+# Contribution 
+Football analyzer files (app.py,style.css & index.html) -Zhiyuan Li
+The Manuel Attempt.ipynb -Timothy Hays & Zhiyuan Li
+Yolo for Football.ipynb -Zhiyuan Li
+Stabalization.ipynb -Zhiyuan Li
