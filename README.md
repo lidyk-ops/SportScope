@@ -1,3 +1,14 @@
+# Intro 
+We have two floders, The Initial Project and football_analyzer Final Porject. 
+
+For The Initial Project, it includes the models that we tried to fix our problem but we failed. Inside this folder we have two plan. To be more specific, they are Plan A and Plan B. 
+
+For Plan A, we tried YOLO model, Segment Anything 2(Sorry that I cannot find the original file right now), and stablization method. 
+
+For Plan B, Tim used the manuel attempt method.
+
+For the football_analyzer Final Porject, it is our final outcome. You can try it out by following the instruction below. 
+
 # 🏈 Football Video Analyzer
 A simple web app that lets you upload an American football video and get AI analysis (Offense & Defense) using Google Gemini.
 
@@ -43,6 +54,13 @@ A simple web app that lets you upload an American football video and get AI anal
 
 # Contribution 
 Football analyzer files (app.py,style.css & index.html) -Zhiyuan Li
+
 The Manuel Attempt.ipynb -Timothy Hays & Zhiyuan Li
+
 Yolo for Football.ipynb -Zhiyuan Li
+
 Stabalization.ipynb -Zhiyuan Li
+
+README -Zhiyuan Li
+
+Report -Timothy Hays, Peixin Yang， Zhiyuan Li
